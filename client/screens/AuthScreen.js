@@ -1,44 +1,95 @@
 import React from 'react';
-import { Image, View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { Image, View, Text, TextInput, StyleSheet } from 'react-native';
+import Colors from '../constants/Colors';
+import PrimaryButton from '../components/ui/PrimaryButton';
 
-
-const AuthScreen = ({ email, setEmail, password, setPassword, isLogin, setIsLogin, handleAuthentication }) => {
+const AuthScreen = ({
+    email,
+    setEmail,
+    password,
+    setPassword,
+    userName,
+    setUserName,
+    phone,
+    setPhone,
+    bloodType,
+    setBloodType,
+    birthDate,
+    setBirthDate,
+    isLogin,
+    setIsLogin,
+    handleAuthentication,
+}) => {
     return (
         <View style={styles.authContainer}>
             <View style={styles.imageContainer}>
                 <Image
-                source={require('../assets/images/iDonor_appLogo.png')} 
-                style={styles.image}
-                resizeMode="contain"
+                    source={require('../assets/images/iDonor_appLogo.png')}
+                    style={styles.image}
+                    resizeMode="contain"
                 />
             </View>
-        <Text style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</Text>
-        <TextInput 
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder='Email'
-            autoCapitalize='none'
-        />
-        <TextInput 
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder='Password'
-            secureTextEntry
-        />
-        <View style={styles.buttonContainer}>
-            <Button title={isLogin ? 'Sign In' : 'Sign Up'} onPress={handleAuthentication} color="#3498db" />
-        </View>
-
-        <View style={styles.bottomContainer}>
-            <Text style={styles.toggleText} onPress={() => setIsLogin(!isLogin)}>
-            {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
-            </Text>
-        </View>
+            <Text style={styles.title}>{isLogin ? 'Вхід' : 'Реєстрація'}</Text>
+            {!isLogin && (
+                <>
+                    <TextInput
+                        style={styles.input}
+                        value={userName}
+                        onChangeText={setUserName}
+                        placeholder="Ім'я"
+                    />
+                    <TextInput
+                        style={styles.input}
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="Номер телефону"
+                        keyboardType="phone-pad"
+                    />
+                    <TextInput
+                        style={styles.input}
+                        value={bloodType}
+                        onChangeText={setBloodType}
+                        placeholder="Група крові (1-4 з Rh + чи -)"
+                    />
+                    <TextInput
+                        style={styles.input}
+                        value={birthDate}
+                        onChangeText={setBirthDate}
+                        placeholder="Дата народження (ДД.ММ.РРРР)"
+                    />
+                </>
+            )}
+            <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email"
+                autoCapitalize="none"
+            />
+            <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Пароль"
+                secureTextEntry
+            />
+            <PrimaryButton onPress={handleAuthentication}>
+                {isLogin ? 'Увійти' : 'Зареєструватися'}
+            </PrimaryButton>
+            <View style={styles.bottomContainer}>
+                <Text style={styles.toggleText}>
+                    {isLogin ? 'Ще не маєте акаунту?' : 'Вже маєте акаунт?'}
+                </Text>
+                <Text
+                    style={styles.toggleButton}
+                    onPress={() => setIsLogin(!isLogin)}
+                >
+                    {isLogin ? 'Зареєструйтесь' : 'Увійдіть'}
+                </Text>
+            </View>
         </View>
     );
-}
+};
 
 export default AuthScreen;
 
@@ -46,7 +97,7 @@ const styles = StyleSheet.create({
     authContainer: {
         width: '80%',
         maxWidth: 400,
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         padding: 16,
         borderRadius: 8,
         elevation: 3,
@@ -56,31 +107,37 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     image: {
-        width: 120,  // Adjust the width as needed
-        height: 120,  // Adjust the height as needed
-        marginBottom: 20,  // Space between the image and the title
+        width: 120,
+        height: 120,
+        marginBottom: 20,
     },
     title: {
+        marginTop: 4,
         fontSize: 24,
         marginBottom: 16,
         textAlign: 'center',
+        color: Colors.primary500,
+        fontWeight: '500',
     },
     input: {
         height: 40,
-        borderColor: '#ddd',
+        borderColor: Colors.borderColor,
         borderWidth: 1,
         marginBottom: 16,
         padding: 8,
         borderRadius: 4,
     },
-    buttonContainer: {
-        marginBottom: 16,
-    },
     toggleText: {
-        color: '#3498db',
+        color: Colors.toggleColor,
         textAlign: 'center',
+        padding: 2,
+    },
+    toggleButton: {
+        color: Colors.accent500,
+        textAlign: 'center',
+        padding: 4,
     },
     bottomContainer: {
-        marginTop: 20,
-    }
+        marginTop: 14,
+    },
 });

@@ -1,9 +1,11 @@
 import { View, Text, Button, StyleSheet } from "react-native";
 
+// import Colors from '../constants/Colors';
+
 const AuthenticatedScreen = ({ user, handleAuthentication }) => {
     return (
         <View style={styles.authContainer}>
-            <Text style={styles.title}>Welcome</Text>
+            <Text style={styles.title}>Привіт!</Text>
             <Text style={styles.emailText}>{user.email}</Text>
             <Button title="Logout" onPress={handleAuthentication} color="#e74c3c" />
         </View>
