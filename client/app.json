@@ -12,6 +12,21 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "expo": {
+      "plugins": [
+        [
+          "expo-font",
+          {
+            "fonts": [
+              "./assets/fonts/e-Ukraine-Bold.otf", 
+              "./assets/fonts/e-Ukraine-Light.otf", 
+              "./assets/fonts/e-Ukraine-Medium.otf",
+              "./assets/fonts/e-Ukraine-Regular.otf"
+            ]
+          }
+        ]
+      ]
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -23,6 +38,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

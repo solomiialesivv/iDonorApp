@@ -47,8 +47,30 @@ const ProtectScreen = () => {
         }
     };
 
+    const validateInputs = () => {
+        if (!email.includes('@')) {
+            Alert.alert('Помилка', 'Введіть коректний email.');
+            return false;
+        }
+        if (password.length < 6) {
+            Alert.alert('Помилка', 'Пароль має містити щонайменше 6 символів.');
+            return false;
+        }
+        if (!isLogin && !/^\d{2}\.\d{2}\.\d{4}$/.test(birthDate)) {
+            Alert.alert('Помилка', 'Введіть коректну дату народження (ДД.ММ.РРРР).');
+            return false;
+        }
+        if (!isLogin &&!/^[1-4][\s]?[+-]$/.test(bloodType)) {
+            Alert.alert('Помилка', 'Введіть коректну групу крові (1+, 1-, 2+, 2-, 3+, 3-, 4+, 4-).');
+            return false;
+        }
+        return true;
+    };
+
     const handleAuthentication = async () => {
         try {
+            if (!validateInputs()) return;
+    
             if (isLogin) {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 fetchUserData(userCredential.user.uid);
@@ -65,10 +87,25 @@ const ProtectScreen = () => {
                 fetchUserData(userId);
             }
         } catch (error) {
-            console.error('Помилка аутентифікації:', error.message);
-            Alert.alert('Помилка', error.message);
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    Alert.alert('Помилка', 'Ця електронна пошта вже використовується.');
+                    break;
+                case 'auth/invalid-email':
+                    Alert.alert('Помилка', 'Невірний формат email.');
+                    break;
+                case 'auth/user-not-found':
+                    Alert.alert('Помилка', 'Користувача не знайдено.');
+                    break;
+                case 'auth/wrong-password':
+                    Alert.alert('Помилка', 'Невірний пароль.');
+                    break;
+                default:
+                    Alert.alert('Помилка', error.message);
+            }
         }
     };
+    
 
     const handleLogout = async () => {
         try {
@@ -81,6 +118,7 @@ const ProtectScreen = () => {
         }
     };
 
+    
     return (
         <ScrollView contentContainerStyle={styles.container}>
             {user ? (

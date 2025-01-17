@@ -1,10 +1,12 @@
 const Colors = {
-    accent500: '#F03751',
-    primary500: '#0057B7',
+    accent500: '#B80000',
+    primary500: '#de6464',
+    primary600: '#ffa6a6',
     white: '#fff',
-    background: '#f0f0f0',
+    background: '#FFE1E1',
     toggleColor: '#3498db',
-    borderColor: '#ddd'
+    borderColor: '#ffa6a6',
+    text: '#5A0000'
 };
 
 export default Colors;
