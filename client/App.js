@@ -1,10 +1,14 @@
 import 'react-native-gesture-handler';
 
 import React from 'react';
-import ProtectScreen from './screens/ProtectScreen';
 import AppLoading from 'expo-app-loading';
 import { useFonts } from 'expo-font';
+import AuthScreen from './screens/AuthScreen';
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 import TabsNavigator from './screens/TabsNavigator';
+
+const Stack = createStackNavigator();
 
 export default App = () => {
   const [fontsLoaded] = useFonts({
@@ -14,10 +18,16 @@ export default App = () => {
     'e-Ukraine-B': require('./assets/fonts/e-Ukraine-Bold.otf')
   });
 
+
   if (!fontsLoaded){
     return <AppLoading />
   }
   return(
-    <TabsNavigator />
-  );
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Auth" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen name="Authenticated" component={TabsNavigator} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  )
 }

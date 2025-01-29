@@ -6,7 +6,9 @@ const Colors = {
     background: '#FFE1E1',
     toggleColor: '#3498db',
     borderColor: '#ffa6a6',
-    text: '#5A0000'
+    text: '#5A0000',
+    inactive: '#f8f8f8',
+    inactiveDark: '#757575'
 };
 
 export default Colors;
