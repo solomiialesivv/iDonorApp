@@ -6,7 +6,9 @@ import { useFonts } from 'expo-font';
 import AuthScreen from './screens/AuthScreen';
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+
 import TabsNavigator from './screens/TabsNavigator';
+import NeedsScreen from './screens/NeedsScreen';
 
 const Stack = createStackNavigator();
 
@@ -27,6 +29,7 @@ export default App = () => {
       <Stack.Navigator initialRouteName="Auth" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="Authenticated" component={TabsNavigator} />
+        {/* <Stack.Screen name="NeedsScreen" component={NeedsScreen} /> */}
       </Stack.Navigator>
     </NavigationContainer>
   )

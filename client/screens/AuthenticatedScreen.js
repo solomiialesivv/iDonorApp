@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, Button, Alert } from "react-native";
 import { auth } from "../firebase/firebase"; 
 import { getFirestore, doc, getDoc } from "firebase/firestore";
+
 import Colors from '../constants/Colors';
+import NeedsScreen from "./NeedsScreen";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import StatisticCard from "../components/ui/StatisticCard";
 import ActionButton from "../components/ui/ActionButton";
@@ -108,9 +110,6 @@ const AuthenticatedScreen = () => {
       <View style={styles.logoutButton}>
         <Button title='Вийти з облікового запису' color="#B80000" onPress={handleLogout} />
       </View>
-      
-      {/* <Button title="Logout" color="#e74c3c" onPress={handleLogout} /> */}
-      
     </View>
   );
 };

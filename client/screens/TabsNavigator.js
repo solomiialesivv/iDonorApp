@@ -5,7 +5,8 @@ import { View, Text, StyleSheet } from 'react-native';
 
 import Colors from '../constants/Colors';
 import AuthenticatedScreen from './AuthenticatedScreen';
-import HomeScreen from './HomeScreen';
+import HomeScreen from './NeedsScreen';
+import NeedsScreen from './NeedsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -34,7 +35,7 @@ export default function TabsNavigator() {
             })}
         >
             <Tab.Screen name="Головна" component={AuthenticatedScreen} />
-            <Tab.Screen name="Потреби" component={HomeScreen} />
+            <Tab.Screen name="Потреби" component={NeedsScreen} />
             <Tab.Screen name="Мапи" component={HomeScreen} />
         </Tab.Navigator>
     );
