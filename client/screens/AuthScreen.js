@@ -11,7 +11,11 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  TouchableOpacity
 } from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
+
 import Colors from "../constants/Colors";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import {
@@ -30,6 +34,7 @@ const AuthScreen = () => {
   const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const navigation = useNavigation();
 
@@ -220,14 +225,31 @@ const AuthScreen = () => {
               keyboardType="email-address"
               returnKeyType="next"
             />
-            <TextInput
+            {/* <TextInput
               style={styles.input}
               value={password}
               onChangeText={setPassword}
               placeholder="Пароль"
               secureTextEntry
               returnKeyType="done"
-            />
+            /> */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Пароль"
+                secureTextEntry={!passwordVisible}
+              />
+              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
+                <Ionicons name={passwordVisible ? "eye-off" : "eye"} size={24} color="gray" />
+              </TouchableOpacity>
+            </View>
+            {isLogin && (
+              <View style={styles.forgotPasswordContainer}>
+                <Text style={styles.forgotPasswordText}>Забули пароль?</Text>
+              </View>
+            )}
             <PrimaryButton onPress={handleAuthentication}>
               {isLogin ? "Увійти" : "Зареєструватися"}
             </PrimaryButton>
@@ -306,7 +328,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
     padding: 4,
   },
+  forgotPasswordContainer: {
+    alignSelf: "flex-end",
+    marginBottom: 10,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: Colors.toggleColor,
+  },
   bottomContainer: {
     marginTop: 14,
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.borderColor,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 40,
   },
 });

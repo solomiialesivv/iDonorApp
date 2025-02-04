@@ -4,7 +4,6 @@ import { auth } from "../firebase/firebase";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 import Colors from '../constants/Colors';
-import NeedsScreen from "./NeedsScreen";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import StatisticCard from "../components/ui/StatisticCard";
 import ActionButton from "../components/ui/ActionButton";
