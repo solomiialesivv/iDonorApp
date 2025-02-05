@@ -11,7 +11,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +22,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
+import ForgotPasswordModal from "../components/ui/ForgotPasswordModal";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 import { useNavigation } from "@react-navigation/native";
@@ -35,7 +36,7 @@ const AuthScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-
+  const [modalVisible, setModalVisible] = useState(false)
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -50,14 +51,12 @@ const AuthScreen = () => {
       return false;
     }
 
-    // Валідація email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert("Помилка", "Невірний формат email.");
       return false;
     }
 
-    // Валідація пароля (мінімум 6 символів, латинські букви, хоча б одна велика і одна цифра)
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
     if (!passwordRegex.test(password)) {
       Alert.alert(
@@ -73,7 +72,6 @@ const AuthScreen = () => {
         return false;
       }
 
-      // Валідація номера телефону (10 цифр, формат українського номера)
       const phoneRegex = /^\+?3?8?(0\d{9})$/;
       if (!phoneRegex.test(phone)) {
         Alert.alert(
@@ -83,7 +81,6 @@ const AuthScreen = () => {
         return false;
       }
 
-      // Валідація групи крові (1+, 1-, 2+, 2-, 3+, 3-, 4+, 4-)
       const bloodTypeRegex = /^(1|2|3|4)[+-]$/;
       if (!bloodTypeRegex.test(bloodType)) {
         Alert.alert(
@@ -93,10 +90,12 @@ const AuthScreen = () => {
         return false;
       }
 
-      // Валідація дати народження (формат ДД.ММ.РРРР)
-      const isValidDate = /^\d{2}\.\d{2}\.\d{4}$/.test(birthDate);
+      const isValidDate = /^(\d{2})[.,](\d{2})[.,](\d{4})$/.test(birthDate);
       if (!isValidDate) {
-        Alert.alert("Помилка", "Невірний формат дати народження.");
+        Alert.alert(
+          "Помилка",
+          "Невірний формат дати народження. Використовуйте ДД.ММ.РРРР або ДД,ММ,РРРР"
+        );
         return false;
       }
     }
@@ -225,14 +224,6 @@ const AuthScreen = () => {
               keyboardType="email-address"
               returnKeyType="next"
             />
-            {/* <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Пароль"
-              secureTextEntry
-              returnKeyType="done"
-            /> */}
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
@@ -241,13 +232,19 @@ const AuthScreen = () => {
                 placeholder="Пароль"
                 secureTextEntry={!passwordVisible}
               />
-              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-                <Ionicons name={passwordVisible ? "eye-off" : "eye"} size={24} color="gray" />
+              <TouchableOpacity
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="gray"
+                />
               </TouchableOpacity>
             </View>
             {isLogin && (
               <View style={styles.forgotPasswordContainer}>
-                <Text style={styles.forgotPasswordText}>Забули пароль?</Text>
+                <Text style={styles.forgotPasswordText} onPress={()=>setModalVisible(true)}>Забули пароль?</Text>
               </View>
             )}
             <PrimaryButton onPress={handleAuthentication}>
@@ -266,6 +263,7 @@ const AuthScreen = () => {
             </View>
           </View>
         </ScrollView>
+        <ForgotPasswordModal visible={modalVisible} onClose={() => setModalVisible(false)} />
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
