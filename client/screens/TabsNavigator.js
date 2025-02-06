@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { View, Text, StyleSheet } from 'react-native';
+// import { View, Text, StyleSheet } from 'react-native';
 
 import Colors from '../constants/Colors';
 import AuthenticatedScreen from './AuthenticatedScreen';

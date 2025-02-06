@@ -8,7 +8,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
 import TabsNavigator from './screens/TabsNavigator';
-import NeedsScreen from './screens/NeedsScreen';
 
 const Stack = createStackNavigator();
 

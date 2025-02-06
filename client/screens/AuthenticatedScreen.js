@@ -4,7 +4,6 @@ import { auth } from "../firebase/firebase";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 import Colors from "../constants/Colors";
-import PrimaryButton from "../components/ui/PrimaryButton";
 import StatisticCard from "../components/ui/StatisticCard";
 import ActionButton from "../components/ui/ActionButton";
 import { Link, useNavigation } from "@react-navigation/native";
@@ -85,7 +84,7 @@ const AuthenticatedScreen = () => {
       </View>
       <View style={[styles.buttonContainer, { marginTop: 14 }]}>
         <Link screen={"Мапи"}>
-          <ActionButton style={{borderRadius: 100, backgroundColor: Colors.accent500}}>Перейти до медцентрів</ActionButton>
+          <ActionButton style={{borderRadius: 100, backgroundColor: Colors.accent500, maxHeight: 50, fontSize: 20}}>Перейти до медцентрів</ActionButton>
         </Link>
       </View>
       <View style={styles.buttonContainer}>
@@ -103,12 +102,12 @@ const AuthenticatedScreen = () => {
         <StatisticCard
           title="К-сть донацій крові"
           imageSource={require("../assets/images/rb_savelife.png")}
-          count="19"
+          count="8"
         />
         <StatisticCard
           title="К-сть крові в літрах"
           imageSource={require("../assets/images/rb_donations.png")}
-          count="4"
+          count="3.4"
         />
       </View>
       <View style={styles.logoutButton}>
@@ -139,9 +138,9 @@ const styles = StyleSheet.create({
   userName: {
     marginTop: 32,
     fontSize: 18,
-    marginBottom: 24,
+    marginBottom: 28,
     color: Colors.text,
-    fontFamily: "e-Ukraine-L",
+    fontFamily: "e-Ukraine-M",
   },
   mainText: {
     fontSize: 14,

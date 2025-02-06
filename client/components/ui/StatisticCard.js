@@ -35,14 +35,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     iconPhoto: {
-        width: 58,
-        height: 58,
+        width: 40,
+        height: 40,
         marginTop: 12,
         marginBottom: 12,
     },
     textCount: {
         fontFamily: 'e-Ukraine-B',
-        fontSize: 38,
+        fontSize: 32,
         color: Colors.accent500,
         marginLeft: 8,
     },
