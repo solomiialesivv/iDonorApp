@@ -7,6 +7,7 @@ import Colors from '../constants/Colors';
 import AuthenticatedScreen from './AuthenticatedScreen';
 import HomeScreen from './NeedsScreen';
 import NeedsScreen from './NeedsScreen';
+import MedCentersScreen from './MedCentersScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -36,7 +37,7 @@ export default function TabsNavigator() {
         >
             <Tab.Screen name="Головна" component={AuthenticatedScreen} />
             <Tab.Screen name="Потреби" component={NeedsScreen} />
-            <Tab.Screen name="Мапи" component={HomeScreen} />
+            <Tab.Screen name="Мапи" component={MedCentersScreen} />
         </Tab.Navigator>
     );
 }

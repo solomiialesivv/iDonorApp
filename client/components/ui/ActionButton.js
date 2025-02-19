@@ -3,9 +3,17 @@ import { StyleSheet } from "react-native";
 
 import Colors from "../../constants/Colors";
 
-const ActionButton = ({ children, style }) => {
+// const ActionButton = ({ children, style }) => {
+//     return (
+//         <PrimaryButton style={[styles.button, style]}>{children}</PrimaryButton>
+//     );
+// };
+
+const ActionButton = ({ children, style, onPress, textStyle }) => {
     return (
-        <PrimaryButton style={[styles.button, style]}>{children}</PrimaryButton>
+        <PrimaryButton style={[styles.button, style]} textStyle={textStyle} onPress={onPress}>
+            {children}
+        </PrimaryButton>
     );
 };
 
@@ -13,7 +21,6 @@ export default ActionButton;
 
 const styles = StyleSheet.create({
     button: {
-        fontSize: 14,
         flex: 1,
         fontWeight: '600',
         backgroundColor: Colors.primary600,

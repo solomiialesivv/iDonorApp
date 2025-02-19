@@ -27,6 +27,8 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 import { useNavigation } from "@react-navigation/native";
 
+import BloodTypeSelector from "../components/logic/BloodTypeSelector";
+
 const AuthScreen = () => {
   const [isLogin, setIsLogin] = useState(false);
   const [userName, setUserName] = useState("");
@@ -36,7 +38,8 @@ const AuthScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false);
+
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -77,15 +80,6 @@ const AuthScreen = () => {
         Alert.alert(
           "Помилка",
           "Невірний формат номера телефону. Використовуйте український формат (380XXXXXXXXX або 0XXXXXXXXX)."
-        );
-        return false;
-      }
-
-      const bloodTypeRegex = /^(1|2|3|4)[+-]$/;
-      if (!bloodTypeRegex.test(bloodType)) {
-        Alert.alert(
-          "Помилка",
-          "Група крові має бути від 1 до 4 з '+' або '-'."
         );
         return false;
       }
@@ -198,12 +192,16 @@ const AuthScreen = () => {
                   keyboardType="phone-pad"
                   returnKeyType="next"
                 />
-                <TextInput
+                {/* <TextInput
                   style={styles.input}
                   value={bloodType}
                   onChangeText={setBloodType}
                   placeholder="Група крові (1-4 з Rh + чи -)"
                   returnKeyType="next"
+                /> */}
+                <BloodTypeSelector
+                  selectedBloodType={bloodType}
+                  setSelectedBloodType={setBloodType}
                 />
                 <TextInput
                   style={styles.input}
@@ -244,7 +242,12 @@ const AuthScreen = () => {
             </View>
             {isLogin && (
               <View style={styles.forgotPasswordContainer}>
-                <Text style={styles.forgotPasswordText} onPress={()=>setModalVisible(true)}>Забули пароль?</Text>
+                <Text
+                  style={styles.forgotPasswordText}
+                  onPress={() => setModalVisible(true)}
+                >
+                  Забули пароль?
+                </Text>
               </View>
             )}
             <PrimaryButton onPress={handleAuthentication}>
@@ -263,7 +266,10 @@ const AuthScreen = () => {
             </View>
           </View>
         </ScrollView>
-        <ForgotPasswordModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+        <ForgotPasswordModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+        />
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
