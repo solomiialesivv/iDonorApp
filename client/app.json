@@ -13,7 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.yourcompany.idonor",
+      "buildNumber": "1.0.0",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +27,17 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "config": {
+        "firebase": {
+          "apiKey": "AIzaSyDuojGnWTEtrlW1E6tT9eNkG1qmYHmSwfs",
+          "authDomain": "idonor-6b2c1.firebaseapp.com",
+          "projectId": "idonor-6b2c1",
+          "storageBucket": "idonor-6b2c1.firebasestorage.app",
+          "messagingSenderId": "708927276226",
+          "appId": "1:708927276226:web:a0fa44286761d43063a75b"
+        }
+      }
     },
     "plugins": [
       [
@@ -35,7 +50,20 @@
             "./assets/fonts/e-Ukraine-Regular.otf"
           ]
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7c76fffc-dc5c-436c-958c-98fec8437efc"
+      }
+    }
   }
 }

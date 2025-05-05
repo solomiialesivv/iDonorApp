@@ -1,11 +1,10 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-// import { View, Text, StyleSheet } from 'react-native';
 
 import Colors from '../constants/Colors';
 import AuthenticatedScreen from './AuthenticatedScreen';
-import HomeScreen from './NeedsScreen';
+import PlanDonationScreen from './PlanDonationScreen';
 import NeedsScreen from './NeedsScreen';
 import MedCentersScreen from './MedCentersScreen';
 
@@ -27,6 +26,9 @@ export default function TabsNavigator() {
                 else if (route.name === 'Потреби') {
                   iconName = 'medkit';
               }
+                else if (route.name === 'Планування') {
+                  iconName = 'calendar-number';
+              }
 
               return <Icon name={iconName} size={size} color={color} />;
               },
@@ -37,6 +39,7 @@ export default function TabsNavigator() {
         >
             <Tab.Screen name="Головна" component={AuthenticatedScreen} />
             <Tab.Screen name="Потреби" component={NeedsScreen} />
+            <Tab.Screen name="Планування" component={PlanDonationScreen}/>
             <Tab.Screen name="Мапи" component={MedCentersScreen} />
         </Tab.Navigator>
     );
