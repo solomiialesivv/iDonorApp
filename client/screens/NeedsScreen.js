@@ -1,4 +1,4 @@
- import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -33,7 +33,6 @@ const BLOOD_GROUPS = [
   { id: "O+", label: "4+" },
   { id: "O-", label: "4-" }
 ];
-
 const NeedsScreen = () => {
   const [needs, setNeeds] = useState([]);
   const [filteredNeeds, setFilteredNeeds] = useState([]);
@@ -114,7 +113,7 @@ const NeedsScreen = () => {
   }, [searchQuery, sortOrder, selectedBloodGroup, needs]);
 
   const handleDonatePress = (item) => {
-    navigation.navigate("Планування", { needId: item.id });
+    navigation.navigate("Планування", { needId: item.id, medicalCenterId: item.medicalCenterId });
   };
 
   const handleRoutePress = (item) => {

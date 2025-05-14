@@ -1,12 +1,13 @@
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Colors from "../../constants/Colors";
 
-const StatisticCard = ({ title, imageSource, count }) => {
+const StatisticCard = ({ title, iconName, iconColor, count }) => {
     return (
         <View style={styles.cardContainer}>
             <Text style={styles.statisticText}>{title}</Text>
             <View style={styles.contentContainer}>
-                <Image source={imageSource} style={styles.iconPhoto} />
+                <Ionicons name={iconName} size={40} color={iconColor} style={styles.iconPhoto} />
                 <Text style={styles.textCount}>{count}</Text>
             </View>
         </View>
@@ -35,8 +36,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     iconPhoto: {
-        width: 40,
-        height: 40,
         marginTop: 12,
         marginBottom: 12,
     },

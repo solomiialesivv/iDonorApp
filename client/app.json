@@ -12,13 +12,22 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "notification": {
+      "icon": "./assets/images/icon.png",
+      "color": "#C5251E",
+      "iosDisplayInForeground": true
+    },
     "ios": {
       "bundleIdentifier": "com.yourcompany.idonor",
       "buildNumber": "1.0.0",
       "supportsTablet": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
+    
     },
     "android": {
       "adaptiveIcon": {
