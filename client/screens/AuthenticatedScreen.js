@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Linking
+  Linking,
+  Platform
 } from "react-native";
 import { auth } from "../firebase/firebase";
 import { 
@@ -18,9 +19,12 @@ import {
   collection, 
   query, 
   where, 
-  getDocs
+  getDocs,
+  addDoc
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as Notifications from 'expo-notifications';
 
 import Colors from "../constants/Colors";
 import StatisticCard from "../components/ui/StatisticCard";
@@ -34,100 +38,73 @@ const AuthenticatedScreen = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [userDonations, setUserDonations] = useState([]);
+  const [plannedDonations, setPlannedDonations] = useState([]);
+  const [completedDonations, setCompletedDonations] = useState([]);
   const [nextDonationDate, setNextDonationDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [completedCount, setCompletedCount] = useState(0);
+  const [completedLiters, setCompletedLiters] = useState(0);
   const navigation = useNavigation();
   const { setUser } = useUser();
 
-  // Calculate the next possible donation date (3 months after last donation)
-  const calculateNextDonationDate = (lastDonationDate) => {
-    if (!lastDonationDate) return null;
-    
-    const lastDate = new Date(lastDonationDate);
-    const nextDate = new Date(lastDate);
-    nextDate.setMonth(nextDate.getMonth() + 3); // Add 3 months
-    
-    return nextDate;
+  // Helper: Fetch medical center names in batch
+  const fetchMedicalCenterNames = async (centerIds) => {
+    const uniqueIds = Array.from(new Set(centerIds));
+    const centers = {};
+    await Promise.all(uniqueIds.map(async (id) => {
+      const docSnap = await getDoc(doc(db, "medicalCenters", id));
+      if (docSnap.exists()) {
+        centers[id] = docSnap.data().nameCenter || docSnap.data().name || "Медичний центр";
+      } else {
+        centers[id] = "Медичний центр";
+      }
+    }));
+    return centers;
   };
 
-  // Format date to DD.MM.YYYY
-  const formatDate = (date) => {
-    if (!date) return "Немає даних";
-    
-    let dateObj;
-    if (date instanceof Date) {
-      dateObj = date;
-    } else if (date.seconds) {
-      // Handle Firestore Timestamp
-      dateObj = new Date(date.seconds * 1000);
-    } else {
-      // Handle string dates
-      dateObj = new Date(date);
-    }
-    
-    const day = dateObj.getDate().toString().padStart(2, '0');
-    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-    const year = dateObj.getFullYear();
-    
-    return `${day}.${month}.${year}`;
-  };
-
-  // Check if next donation date is in the future
-  const isEligibleForDonation = (nextDate) => {
-    if (!nextDate) return true;
-    
-    const today = new Date();
-    return nextDate <= today;
-  };
-
-  // Fetch user's donation history - simplified to avoid index requirement
+  // Fetch user's planned and completed donations from donationRequests
   const fetchUserDonations = async (userId) => {
     try {
-      // Using a simple query without ordering to avoid index requirement
-      const donationsQuery = query(
-        collection(db, "donations"),
-        where("userId", "==", userId)
+      const q = query(
+        collection(db, "donationRequests"),
+        where("donorId", "==", userId)
       );
-      
-      const querySnapshot = await getDocs(donationsQuery);
-      
-      if (!querySnapshot.empty) {
-        const donations = [];
-        querySnapshot.forEach((doc) => {
-          donations.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
-        
-        // Sort the donations manually after fetching
-        donations.sort((a, b) => {
-          const dateA = a.donationDate instanceof Date ? 
-            a.donationDate : 
-            new Date(a.donationDate?.seconds ? a.donationDate.seconds * 1000 : a.donationDate);
-          const dateB = b.donationDate instanceof Date ? 
-            b.donationDate : 
-            new Date(b.donationDate?.seconds ? b.donationDate.seconds * 1000 : b.donationDate);
-          return dateB - dateA; // Sort in descending order (newest first)
-        });
-        
-        setUserDonations(donations);
-        
-        // Get the last donation date from the most recent donation
-        if (donations.length > 0 && donations[0].donationDate) {
-          const lastDonationDate = donations[0].donationDate;
-          const nextDate = calculateNextDonationDate(
-            lastDonationDate instanceof Date ? 
-              lastDonationDate : 
-              new Date(lastDonationDate.seconds * 1000)
-          );
-          
+      const querySnapshot = await getDocs(q);
+      const donations = [];
+      querySnapshot.forEach((doc) => {
+        donations.push({ id: doc.id, ...doc.data() });
+      });
+      // Fetch medical center names for all donations
+      const centerIds = donations.map(d => d.centerId);
+      const centerNames = await fetchMedicalCenterNames(centerIds);
+      // Attach center name to each donation
+      donations.forEach(d => {
+        d.medicalCenterName = centerNames[d.centerId] || "Медичний центр";
+      });
+      // Separate planned and completed donations
+      setPlannedDonations(
+        donations.filter(d => d.status === "pending" || d.status === "in process")
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+      );
+      const completed = donations.filter(d => d.status === "done" || d.status === "completed");
+      setCompletedDonations(
+        completed.sort((a, b) => new Date(b.date) - new Date(a.date))
+      );
+      setCompletedCount(completed.length);
+      setCompletedLiters((completed.length * 0.45).toFixed(2));
+      // Set next donation date (3 months after last completed donation)
+      if (completed.length > 0) {
+        const lastCompleted = completed[0];
+        if (lastCompleted) {
+          const lastDate = new Date(lastCompleted.date);
+          const nextDate = new Date(lastDate);
+          nextDate.setMonth(nextDate.getMonth() + 3);
           setNextDonationDate(nextDate);
         }
       }
     } catch (error) {
       console.error("Error fetching user donations:", error);
-      // Don't rethrow the error - just log it
     }
   };
 
@@ -137,14 +114,7 @@ const AuthenticatedScreen = () => {
     try {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        const userData = docSnap.data();
-        
-        setUserData((prevData) => ({
-          ...prevData,
-          ...userData,
-        }));
-        
-        // After fetching user data, fetch their donations
+        setUserData(docSnap.data());
         await fetchUserDonations(userId);
       } else {
         console.log("No such document!");
@@ -156,22 +126,19 @@ const AuthenticatedScreen = () => {
     }
   };
 
-  // Initialize component and fetch data
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
-      setUserData({
-        userName: currentUser.displayName || "Невідомий користувач",
-        email: currentUser.email,
-        uid: currentUser.uid,
-      });
-
       setUser(currentUser);
       fetchUserData(currentUser.uid);
     } else {
       setLoading(false);
       Alert.alert("Помилка", "Користувач не знайдений.");
     }
+  }, []);
+
+  useEffect(() => {
+    Notifications.requestPermissionsAsync();
   }, []);
 
   // Handle user logout
@@ -218,10 +185,15 @@ const AuthenticatedScreen = () => {
     navigation.navigate('Планування');
   };
 
-  // // Create Firestore index if needed
-  // const createFirestoreIndex = () => {
-  //   Linking.openURL('https://console.firebase.google.com/v1/r/project/idonor-6b2c1/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9pZG9ub3ItNmIyYzEvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL2RvbmF0aW9ucy9pbmRleGVzL18QARoKCgZ1c2VySWQQARoQCgxkb25hdGlvbkRhdGUQAhoMCghfX25hbWVfXxAC');
-  // };
+  // Format date to DD.MM.YYYY
+  const formatDate = (date) => {
+    if (!date) return "Немає даних";
+    let dateObj = date instanceof Date ? date : new Date(date);
+    const day = dateObj.getDate().toString().padStart(2, '0');
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
 
   if (loading) {
     return (
@@ -321,50 +293,92 @@ const AuthenticatedScreen = () => {
             <Ionicons name="stats-chart" size={20} color={Colors.accent500} />
             <Text style={styles.sectionTitle}>Ваша статистика</Text>
           </View>
-          
           <View style={styles.statisticsContainer}>
             <StatisticCard
               title="К-сть донацій крові"
               iconName="water"
-              iconColor={Colors.accent500}
-              count={userData?.donationAmount?.toString() || "0"}
+              iconColor={Colors.primary500}
+              count={completedCount.toString()}
             />
             <StatisticCard
               title="К-сть крові в літрах"
               iconName="flask"
               iconColor={Colors.primary500}
-              count={userData?.bloodLiters?.toString() || "0"}
+              count={completedLiters.toString()}
             />
           </View>
-
-          {/* Donation Timeline Section */}
           <View style={styles.timelineContainer}>
             <View style={styles.timelineItem}>
               <Ionicons name="time-outline" size={20} color={Colors.primary500} />
               <View style={styles.timelineTextContainer}>
                 <Text style={styles.timelineLabel}>Остання донація:</Text>
                 <Text style={styles.timelineValue}>
-                  {userData?.lastDonation ? formatDate(userData.lastDonation) : "Немає донацій"}
+                  {completedDonations.length > 0 ? formatDate(completedDonations[0].date) : "Немає донацій"}
                 </Text>
               </View>
             </View>
-            
             <View style={styles.timelineItem}>
               <Ionicons 
-                name={isEligibleForDonation(nextDonationDate) ? "checkmark-circle" : "calendar"} 
+                name={(!nextDonationDate || nextDonationDate <= new Date()) ? "checkmark-circle" : "calendar"} 
                 size={20} 
-                color={isEligibleForDonation(nextDonationDate) ? Colors.success : Colors.accent500} 
+                color={(!nextDonationDate || nextDonationDate <= new Date()) ? Colors.success : Colors.accent500} 
               />
               <View style={styles.timelineTextContainer}>
                 <Text style={styles.timelineLabel}>Наступна можлива донація:</Text>
                 <Text style={[
                   styles.timelineValue, 
-                  isEligibleForDonation(nextDonationDate) && styles.eligibleText
+                  (!nextDonationDate || nextDonationDate <= new Date()) && styles.eligibleText
                 ]}>
                   {nextDonationDate ? formatDate(nextDonationDate) : "Можлива зараз"}
                 </Text>
               </View>
             </View>
+          </View>
+        </View>
+
+        {/* Planned Donations Section */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderContainer}>
+            <Ionicons name="calendar" size={20} color={Colors.accent500} />
+            <Text style={styles.sectionTitle}>Заплановані донації</Text>
+          </View>
+          <View style={styles.donationsListContainer}>
+            {plannedDonations.slice(0, 3).map((donation) => (
+              <View key={donation.id} style={styles.donationItem}>
+                <View style={styles.donationDateContainer}>
+                  <Text style={styles.donationDate}>{formatDate(donation.date)}</Text>
+                </View>
+                <View style={styles.donationDetails}>
+                  <Text style={styles.donationCenter}>{donation.medicalCenterName}</Text>
+                  <View style={styles.donationQuantityContainer}>
+                    <Ionicons name="time" size={16} color={Colors.primary500} />
+                    <Text style={styles.donationQuantity}>{donation.time || "Час не вказано"}</Text>
+                  </View>
+                </View>
+                <View style={[
+                  styles.donationStatus, 
+                  donation.status === "in process" ? styles.processingStatus : styles.pendingStatus
+                ]}>
+                  <Text style={styles.donationStatusText}>
+                    {donation.status === "in process" ? "В процесі" : "Очікує"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+            {plannedDonations.length === 0 && (
+              <View style={styles.emptyDonationsContainer}>
+                <Ionicons name="calendar-outline" size={40} color={Colors.grey300} />
+                <Text style={styles.emptyDonationsText}>
+                  У вас немає запланованих донацій. Заплануйте донацію, щоб рятувати життя.
+                </Text>
+                <TouchableOpacity 
+                  style={styles.startDonatingButton}
+                  onPress={() => navigation.navigate('Планування')}
+                >
+                  <Text style={styles.startDonatingText}>Запланувати донацію</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
 
@@ -374,47 +388,29 @@ const AuthenticatedScreen = () => {
             <Ionicons name="list" size={20} color={Colors.accent500} />
             <Text style={styles.sectionTitle}>Ваші останні донації</Text>
           </View>
-          
-          {userDonations.length > 0 ? (
+          {completedDonations.length > 0 ? (
             <View style={styles.donationsListContainer}>
-              {userDonations.slice(0, 3).map((donation, index) => (
+              {completedDonations.slice(0, 3).map((donation) => (
                 <View key={donation.id} style={styles.donationItem}>
                   <View style={styles.donationDateContainer}>
-                    <Text style={styles.donationDate}>
-                      {formatDate(donation.donationDate)}
-                    </Text>
+                    <Text style={styles.donationDate}>{formatDate(donation.date)}</Text>
                   </View>
                   <View style={styles.donationDetails}>
-                    <Text style={styles.donationCenter}>
-                      {donation.medicalCenterName || "Медичний центр"}
-                    </Text>
+                    <Text style={styles.donationCenter}>{donation.medicalCenterName}</Text>
                     <View style={styles.donationQuantityContainer}>
                       <Ionicons name="water" size={16} color={Colors.primary500} />
-                      <Text style={styles.donationQuantity}>
-                        {donation.quantityML || 0} мл
-                      </Text>
+                      <Text style={styles.donationQuantity}>{donation.quantityML || 0} мл</Text>
                     </View>
                   </View>
                   <View style={[
                     styles.donationStatus, 
-                    donation.status === "completed" ? 
-                      styles.completedStatus : 
-                      donation.status === "in process" ? 
-                        styles.processingStatus : 
-                        styles.pendingStatus
+                    styles.completedStatus
                   ]}>
-                    <Text style={styles.donationStatusText}>
-                      {donation.status === "completed" ? 
-                        "Завершено" : 
-                        donation.status === "in process" ? 
-                          "В процесі" : 
-                          "Очікує"}
-                    </Text>
+                    <Text style={styles.donationStatusText}>Здано</Text>
                   </View>
                 </View>
               ))}
-              
-              {userDonations.length > 3 && (
+              {completedDonations.length > 3 && (
                 <TouchableOpacity 
                   style={styles.viewAllButton}
                   onPress={() => navigation.navigate("Історія донацій")}
@@ -432,7 +428,7 @@ const AuthenticatedScreen = () => {
               </Text>
               <TouchableOpacity 
                 style={styles.startDonatingButton}
-                onPress={navigateToPlanning}
+                onPress={() => navigation.navigate('Планування')}
               >
                 <Text style={styles.startDonatingText}>Запланувати донацію</Text>
               </TouchableOpacity>
@@ -446,6 +442,55 @@ const AuthenticatedScreen = () => {
         onClose={handleModalClose}
         userData={userData}
       />
+      {/* iOS Date Picker (native presentation) */}
+      {Platform.OS === 'ios' && showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="spinner"
+          minimumDate={new Date()}
+          maximumDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (event.type === 'set' && selectedDate) {
+              setDate(selectedDate);
+            }
+          }}
+          style={{ backgroundColor: 'white' }}
+        />
+      )}
+      <View style={{ alignItems: 'center', marginVertical: 8 }}>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#1976D2',
+            paddingVertical: 14,
+            paddingHorizontal: 32,
+            borderRadius: 30,
+            marginTop: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            elevation: 2,
+          }}
+          onPress={async () => {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: 'Термінова потреба у крові!',
+                body: 'Потрібна кров групи 1+ у центрі Тестовий центр',
+                sound: 'default',
+              },
+              trigger: null,
+            });
+          }}
+        >
+          <Ionicons name="notifications" size={20} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={{ color: '#fff', fontFamily: 'e-Ukraine-M', fontSize: 16 }}>
+            Тестова нотифікація
+          </Text>
+        </TouchableOpacity>
+        <Text style={{ color: '#1976D2', marginTop: 4, fontSize: 12 }}>
+          (Локальна нотифікація для тесту в Expo Go)
+        </Text>
+      </View>
     </ScrollView>
   );
 };
@@ -715,7 +760,7 @@ const styles = StyleSheet.create({
   },
   donationCenter: {
     fontFamily: "e-Ukraine-M",
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textDark,
     marginBottom: 4,
   },

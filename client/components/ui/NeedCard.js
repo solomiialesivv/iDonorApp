@@ -32,23 +32,8 @@ const NeedCard = ({ item, onDonatePress, onRoutePress }) => {
   // Форматуємо відсоток для відображення
   const progressPercent = Math.round(progress * 100);
 
-  // Динамічне визначення терміновості запиту на основі наявних даних
-  const determineUrgency = () => {
-    // 1. Якщо зібрано менше 20% від потрібної кількості - терміновий
-    if (progress < 0.2) return true;
-
-    // 2. Рідкісні групи крові мають вищий пріоритет (негативний резус)
-    if (
-      item.bloodGroup &&
-      (item.bloodGroup.includes("-") ||
-        item.bloodGroup === "AB+" ||
-        item.bloodGroup === "3+")
-    )
-      return true;
-    return false;
-  };
-
-  const isUrgent = determineUrgency();
+  // Використовуємо поле urgency з бази даних
+  const isUrgent = !!item.urgency;
 
   return (
     <View style={[styles.card, isUrgent && styles.urgentCard]}>

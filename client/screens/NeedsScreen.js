@@ -16,22 +16,25 @@ import {
   getDocs,
   doc,
   getDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import Colors from "../constants/Colors";
 import NeedCard from "../components/ui/NeedCard";
 
 const BLOOD_GROUPS = [
-  { id: "A+", label: "1+" },
-  { id: "A-", label: "1-" },
-  { id: "B+", label: "2+" },
-  { id: "B-", label: "2-" },
-  { id: "AB+", label: "3+" },
-  { id: "AB-", label: "3-" },
-  { id: "O+", label: "4+" },
-  { id: "O-", label: "4-" }
+  { id: "1+", label: "1+" },
+  { id: "1-", label: "1-" },
+  { id: "2+", label: "2+" },
+  { id: "2-", label: "2-" },
+  { id: "3+", label: "3+" },
+  { id: "3-", label: "3-" },
+  { id: "4+", label: "4+" },
+  { id: "4-", label: "4-" }
 ];
 const NeedsScreen = () => {
   const [needs, setNeeds] = useState([]);
@@ -41,9 +44,25 @@ const NeedsScreen = () => {
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedBloodGroup, setSelectedBloodGroup] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [nextPossibleDate, setNextPossibleDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
   
   const navigation = useNavigation();
   const db = getFirestore();
+
+  // Helper: fetch completed donationRequests for a bloodNeed and sum quantityML
+  const getCollectedAmount = async (bloodNeedId) => {
+    const donationRequestsSnapshot = await getDocs(collection(db, "donationRequests"));
+    let total = 0;
+    donationRequestsSnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if ((data.bloodNeedId === bloodNeedId) && (data.status === "done" || data.status === "completed")) {
+        total += Number(data.quantityML) || 0;
+      }
+    });
+    return total;
+  };
 
   const fetchNeeds = async () => {
     try {
@@ -64,6 +83,9 @@ const NeedsScreen = () => {
 
         if (!medicalCenterSnap.exists()) continue;
 
+        // Dynamically calculate collectedAmount
+        const collectedAmount = await getCollectedAmount(docSnap.id);
+
         needsData.push({
           id: docSnap.id,
           medicalCenter: medicalCenterSnap.data().nameCenter || "Невідомий центр",
@@ -71,13 +93,15 @@ const NeedsScreen = () => {
           email: medicalCenterSnap.data().email || "Немає email",
           bloodGroup: needData.bloodGroup || "Невідома група",
           neededAmount: needData.neededAmount || 0,
-          collectedAmount: needData.collectedAmount || 0,
+          collectedAmount,
           requestDate: needData.dateOfRequest || null,
           status: needData.status || "Активний",
           medicalCenterId: needData.medicalCenterId.id,
+          urgency: needData.urgency || false,
         });
       }
 
+      console.log('Fetched needs:', needsData);
       setNeeds(needsData);
       setFilteredNeeds(needsData);
     } catch (error) {
@@ -109,8 +133,48 @@ const NeedsScreen = () => {
       return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
     });
 
-    setFilteredNeeds(updatedNeeds);
+    // Filter out fulfilled needs based on dynamic collectedAmount
+    updatedNeeds = updatedNeeds.filter(
+      (need) => (need.collectedAmount || 0) < (need.neededAmount || 1)
+    );
+
+    // Always show urgent needs first
+    const criticalNeeds = updatedNeeds.filter(need => need.urgency === true || need.urgency === "true");
+    const nonCriticalNeeds = updatedNeeds.filter(need => !(need.urgency === true || need.urgency === "true"));
+    const sortedNeeds = [...criticalNeeds, ...nonCriticalNeeds];
+
+    console.log('Filtered needs:', sortedNeeds);
+    setFilteredNeeds(sortedNeeds);
   }, [searchQuery, sortOrder, selectedBloodGroup, needs]);
+
+  useEffect(() => {
+    const fetchNextPossibleDate = async () => {
+      const q = query(
+        collection(db, "donationRequests"),
+        where("donorId", "==", user?.uid),
+        where("status", "in", ["done", "completed"])
+      );
+      const snapshot = await getDocs(q);
+      let lastDonationDate = null;
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        if (!lastDonationDate || new Date(d.date) > new Date(lastDonationDate)) {
+          lastDonationDate = d.date;
+        }
+      });
+      let minDate = new Date();
+      if (lastDonationDate) {
+        minDate = new Date(lastDonationDate);
+        minDate.setMonth(minDate.getMonth() + 3);
+      }
+      setNextPossibleDate(minDate);
+      setTempDate(minDate);
+    };
+
+    if (showDatePicker) {
+      fetchNextPossibleDate();
+    }
+  }, [showDatePicker]);
 
   const handleDonatePress = (item) => {
     navigation.navigate("Планування", { needId: item.id, medicalCenterId: item.medicalCenterId });
@@ -129,15 +193,32 @@ const NeedsScreen = () => {
     );
   }
 
-  const renderHeader = () => (
-    <>
+  const renderEmptyList = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="water-outline" size={60} color={Colors.primaryLight} />
+      <Text style={styles.emptyText}>
+        На даний момент немає запитів з такими параметрами пошуку
+      </Text>
+      <TouchableOpacity 
+        style={styles.resetButton}
+        onPress={() => {
+          setSearchQuery("");
+          setSelectedBloodGroup(null);
+        }}
+      >
+        <Text style={styles.resetButtonText}>Скинути фільтри</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Актуальні потреби у крові</Text>
         <Text style={styles.subHeader}>
           Знайдіть центр, якому потрібна ваша допомога
         </Text>
       </View>
-      
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Ionicons name="search" size={20} color={Colors.inactiveDark} />
@@ -147,14 +228,16 @@ const NeedsScreen = () => {
             placeholderTextColor={Colors.inactiveDark}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <TouchableOpacity onPress={() => setSearchQuery("")}> 
               <Ionicons name="close-circle" size={20} color={Colors.inactiveDark} />
             </TouchableOpacity>
           )}
         </View>
-        
         <TouchableOpacity
           onPress={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
           style={styles.sortButton}
@@ -166,7 +249,6 @@ const NeedsScreen = () => {
           />
         </TouchableOpacity>
       </View>
-      
       <View style={styles.filterSection}>
         <Text style={styles.filterTitle}>Фільтр за групою крові:</Text>
         <View style={styles.bloodGroupsContainer}>
@@ -193,7 +275,6 @@ const NeedsScreen = () => {
           ))}
         </View>
       </View>
-      
       <View style={styles.resultsContainer}>
         <Text style={styles.resultsText}>
           {filteredNeeds.length > 0 
@@ -202,29 +283,6 @@ const NeedsScreen = () => {
           }
         </Text>
       </View>
-    </>
-  );
-
-  const renderEmptyList = () => (
-    <View style={styles.emptyContainer}>
-      <Ionicons name="water-outline" size={60} color={Colors.primaryLight} />
-      <Text style={styles.emptyText}>
-        На даний момент немає запитів з такими параметрами пошуку
-      </Text>
-      <TouchableOpacity 
-        style={styles.resetButton}
-        onPress={() => {
-          setSearchQuery("");
-          setSelectedBloodGroup(null);
-        }}
-      >
-        <Text style={styles.resetButtonText}>Скинути фільтри</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  return (
-    <SafeAreaView style={styles.container}>
       <FlatList
         data={filteredNeeds}
         keyExtractor={(item) => item.id}
@@ -233,9 +291,9 @@ const NeedsScreen = () => {
             item={item} 
             onDonatePress={() => handleDonatePress(item)}
             onRoutePress={() => handleRoutePress(item)}
+            isCritical={item.urgency === true}
           />
         )}
-        ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyList}
         contentContainerStyle={
           filteredNeeds.length === 0 

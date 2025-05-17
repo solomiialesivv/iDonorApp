@@ -32,6 +32,7 @@ const ProfileEditModal = ({ visible, onClose, userData }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailChanged, setEmailChanged] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(userData?.notificationEnabled ?? true);
   
   const bloodTypes = ['1+', '1-', '2+', '2-', '3+', '3-', '4+', '4-'];
 
@@ -45,6 +46,7 @@ const ProfileEditModal = ({ visible, onClose, userData }) => {
       setShowEmailConfirmation(false);
       setPassword('');
       setEmailChanged(false);
+      setNotificationsEnabled(userData.notificationEnabled ?? true);
     }
   }, [visible, userData]);
 
@@ -172,7 +174,8 @@ const ProfileEditModal = ({ visible, onClose, userData }) => {
       await updateDoc(userRef, {
         userName: userName,
         phone: phoneNumber,
-        bloodType: bloodType
+        bloodType: bloodType,
+        notificationEnabled: notificationsEnabled
       });
       
       Alert.alert('Успіх', 'Інформацію профілю оновлено успішно');
@@ -330,6 +333,27 @@ const ProfileEditModal = ({ visible, onClose, userData }) => {
                           </Text>
                         </TouchableOpacity>
                       ))}
+                    </View>
+                  </View>
+                  
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Сповіщення</Text>
+                    <View style={styles.notificationContainer}>
+                      <Text style={styles.notificationText}>
+                        Отримувати сповіщення про термінові потреби в крові
+                      </Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.toggleButton,
+                          notificationsEnabled && styles.toggleButtonActive
+                        ]}
+                        onPress={() => setNotificationsEnabled(!notificationsEnabled)}
+                      >
+                        <View style={[
+                          styles.toggleCircle,
+                          notificationsEnabled && styles.toggleCircleActive
+                        ]} />
+                      </TouchableOpacity>
                     </View>
                   </View>
                   
@@ -523,247 +547,51 @@ const styles = StyleSheet.create({
     fontFamily: 'e-Ukraine-M',
     fontSize: 12,
     color: Colors.textDark
-  }
+  },
+  notificationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.grey100,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.borderColor,
+  },
+  notificationText: {
+    fontFamily: 'e-Ukraine-L',
+    fontSize: 14,
+    color: Colors.text,
+    flex: 1,
+    marginRight: 12,
+  },
+  toggleButton: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.grey300,
+    padding: 2,
+  },
+  toggleButtonActive: {
+    backgroundColor: Colors.accent500,
+  },
+  toggleCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  toggleCircleActive: {
+    transform: [{ translateX: 22 }],
+  },
 });
 
 export default ProfileEditModal;
-
-// import React, { useState } from 'react';
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   Modal,
-//   TextInput,
-//   TouchableOpacity,
-//   TouchableWithoutFeedback,
-//   Keyboard,
-//   Alert,
-//   Platform
-// } from 'react-native';
-// import { Ionicons } from '@expo/vector-icons';
-// import { auth, db } from '../../firebase/firebase';
-// import { doc, updateDoc } from 'firebase/firestore';
-// import Colors from '../../constants/Colors';
-
-// const ProfileEditModal = ({ visible, onClose, userData }) => {
-//   const [userName, setUserName] = useState(userData?.userName || '');
-//   const [phoneNumber, setPhoneNumber] = useState(userData?.phone || '');
-//   const [bloodType, setBloodType] = useState(userData?.bloodType || '');
-//   const [loading, setLoading] = useState(false);
-  
-//   const bloodTypes = ['1+', '1-', '2+', '2-', '3+', '3-', '4+', '4-'];
-
-//   const saveChanges = async () => {
-//     if (!userName.trim()) {
-//       Alert.alert('Помилка', 'Будь ласка, введіть ваше ім\'я');
-//       return;
-//     }
-
-//     setLoading(true);
-//     try {
-//       const userId = auth.currentUser.uid;
-//       const userRef = doc(db, 'users', userId);
-      
-//       await updateDoc(userRef, {
-//         userName: userName,
-//         phone: phoneNumber,
-//         bloodType: bloodType
-//       });
-      
-//       Alert.alert('Успіх', 'Інформацію профілю оновлено успішно');
-//       onClose(true); // Передаємо true, щоб вказати, що дані були оновлені
-//     } catch (error) {
-//       console.error('Error updating profile:', error);
-//       Alert.alert('Помилка', 'Не вдалося оновити профіль. Спробуйте пізніше.');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <Modal
-//       animationType="fade"
-//       transparent={true}
-//       visible={visible}
-//       onRequestClose={onClose}
-//     >
-//       <TouchableWithoutFeedback onPress={() => {
-//         Keyboard.dismiss();
-//         onClose();
-//       }}>
-//         <View style={styles.centeredView}>
-//           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-//             <View style={styles.modalView}>
-//               <View style={styles.modalHeader}>
-//                 <Text style={styles.modalTitle}>Редагувати профіль</Text>
-//                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-//                   <Ionicons name="close" size={24} color={Colors.textDark} />
-//                 </TouchableOpacity>
-//               </View>
-              
-//               <View style={styles.inputContainer}>
-//                 <Text style={styles.inputLabel}>Ім'я</Text>
-//                 <TextInput
-//                   style={styles.input}
-//                   value={userName}
-//                   onChangeText={setUserName}
-//                   placeholder="Введіть ваше ім'я"
-//                   placeholderTextColor={Colors.inactiveDark}
-//                 />
-//               </View>
-              
-//               <View style={styles.inputContainer}>
-//                 <Text style={styles.inputLabel}>Телефон</Text>
-//                 <TextInput
-//                   style={styles.input}
-//                   value={phoneNumber}
-//                   onChangeText={setPhoneNumber}
-//                   placeholder="Введіть ваш телефон"
-//                   placeholderTextColor={Colors.inactiveDark}
-//                   keyboardType="phone-pad"
-//                 />
-//               </View>
-              
-//               <View style={styles.inputContainer}>
-//                 <Text style={styles.inputLabel}>Група крові</Text>
-//                 <View style={styles.bloodTypesContainer}>
-//                   {bloodTypes.map(type => (
-//                     <TouchableOpacity
-//                       key={type}
-//                       style={[
-//                         styles.bloodTypeButton,
-//                         bloodType === type && styles.bloodTypeButtonSelected
-//                       ]}
-//                       onPress={() => setBloodType(type)}
-//                     >
-//                       <Text 
-//                         style={[
-//                           styles.bloodTypeText,
-//                           bloodType === type && styles.bloodTypeTextSelected
-//                         ]}
-//                       >
-//                         {type}
-//                       </Text>
-//                     </TouchableOpacity>
-//                   ))}
-//                 </View>
-//               </View>
-              
-//               <TouchableOpacity
-//                 style={styles.saveButton}
-//                 onPress={saveChanges}
-//                 disabled={loading}
-//               >
-//                 <Text style={styles.saveButtonText}>
-//                   {loading ? 'Збереження...' : 'Зберегти зміни'}
-//                 </Text>
-//               </TouchableOpacity>
-//             </View>
-//           </TouchableWithoutFeedback>
-//         </View>
-//       </TouchableWithoutFeedback>
-//     </Modal>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   centeredView: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     backgroundColor: 'rgba(0, 0, 0, 0.5)'
-//   },
-//   modalView: {
-//     width: '90%',
-//     maxWidth: 400,
-//     backgroundColor: Colors.white,
-//     borderRadius: 16,
-//     padding: 20,
-//     shadowColor: Colors.black,
-//     shadowOffset: {
-//       width: 0,
-//       height: 2
-//     },
-//     shadowOpacity: 0.25,
-//     shadowRadius: 4,
-//     elevation: 5
-//   },
-//   modalHeader: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     marginBottom: 20,
-//     paddingBottom: 10,
-//     borderBottomWidth: 1,
-//     borderBottomColor: Colors.grey200
-//   },
-//   modalTitle: {
-//     fontFamily: 'e-Ukraine-M',
-//     fontSize: 18,
-//     color: Colors.textDark
-//   },
-//   closeButton: {
-//     padding: 5
-//   },
-//   inputContainer: {
-//     marginBottom: 16
-//   },
-//   inputLabel: {
-//     fontFamily: 'e-Ukraine-M',
-//     fontSize: 14,
-//     color: Colors.textDark,
-//     marginBottom: 6
-//   },
-//   input: {
-//     borderWidth: 1,
-//     borderColor: Colors.borderColor,
-//     borderRadius: 8,
-//     padding: Platform.OS === 'ios' ? 12 : 10,
-//     fontFamily: 'e-Ukraine-L',
-//     fontSize: 16,
-//     color: Colors.text,
-//     backgroundColor: Colors.grey100
-//   },
-//   bloodTypesContainer: {
-//     flexDirection: 'row',
-//     flexWrap: 'wrap',
-//     marginTop: 5
-//   },
-//   bloodTypeButton: {
-//     paddingVertical: 8,
-//     paddingHorizontal: 14,
-//     borderRadius: 20,
-//     borderWidth: 1,
-//     borderColor: Colors.borderColor,
-//     backgroundColor: Colors.white,
-//     marginRight: 8,
-//     marginBottom: 8
-//   },
-//   bloodTypeButtonSelected: {
-//     backgroundColor: Colors.accent500,
-//     borderColor: Colors.accent500
-//   },
-//   bloodTypeText: {
-//     fontFamily: 'e-Ukraine-M',
-//     fontSize: 14,
-//     color: Colors.textDark
-//   },
-//   bloodTypeTextSelected: {
-//     color: Colors.white
-//   },
-//   saveButton: {
-//     backgroundColor: Colors.accent500,
-//     paddingVertical: 12,
-//     borderRadius: 25,
-//     alignItems: 'center',
-//     marginTop: 10
-//   },
-//   saveButtonText: {
-//     fontFamily: 'e-Ukraine-M',
-//     fontSize: 16,
-//     color: Colors.white
-//   }
-// });
-
-// export default ProfileEditModal;

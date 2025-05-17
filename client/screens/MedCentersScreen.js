@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, StyleSheet, Alert, ScrollView, TouchableOpacity } from "react-native";
 import MapView, { Marker, Polyline, Callout } from "react-native-maps";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
@@ -7,6 +7,7 @@ import * as Location from "expo-location";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import WorkingHoursTable from "../components/ui/WorkingHoursTable";
 import { Ionicons } from "@expo/vector-icons";
+import { useRoute, useNavigation } from "@react-navigation/native";
 
 const fetchRoute = async (start, end) => {
   try {
@@ -34,6 +35,9 @@ const MedCentersScreen = () => {
   const [manualLocation, setManualLocation] = useState(null);
   const [routeCoords, setRouteCoords] = useState([]);
   const [useManualLocation, setUseManualLocation] = useState(false);
+  const mapRef = useRef(null);
+  const route = useRoute();
+  const navigation = useNavigation();
 
   const db = getFirestore();
 
@@ -60,6 +64,27 @@ const MedCentersScreen = () => {
 
     fetchMedicalCenters();
   }, [db]);
+
+  // Select center if medicalCenterId is passed via navigation and focus map
+  useEffect(() => {
+    if (route.params?.medicalCenterId && medicalCenters.length > 0) {
+      const center = medicalCenters.find(
+        (c) => c.id === route.params.medicalCenterId
+      );
+      if (center) {
+        setSelectedCenter(center);
+        // Focus the map on this center
+        if (center.location && mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude: center.location.latitude,
+            longitude: center.location.longitude,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }, 1000);
+        }
+      }
+    }
+  }, [route.params?.medicalCenterId, medicalCenters]);
 
   const getUserLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -105,6 +130,7 @@ const MedCentersScreen = () => {
       
       {mapReady && (
         <MapView
+          ref={mapRef}
           style={styles.map}
           initialRegion={{
             latitude: 49.8397,
@@ -223,12 +249,15 @@ const MedCentersScreen = () => {
               <PrimaryButton
                 style={styles.registerButton}
                 textStyle={styles.registerButtonText}
-                onPress={() =>
-                  Alert.alert(
-                    "Запис на донорство",
-                    `Ви записуєтесь у ${selectedCenter.name}`
-                  )
-                }
+                onPress={() => {
+                  if (selectedCenter) {
+                    navigation.navigate('Планування', {
+                      medicalCenterId: selectedCenter.id
+                    });
+                  } else {
+                    Alert.alert('Помилка', 'Будь ласка, оберіть медичний центр');
+                  }
+                }}
               >
                 Записатися на донацію
               </PrimaryButton>

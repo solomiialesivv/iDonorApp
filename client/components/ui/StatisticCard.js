@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     statisticText: {
         fontFamily: 'e-Ukraine-R',
         color: Colors.accent500,
-        fontSize: 13,
+        fontSize: 14,
     },
     contentContainer: {
         flexDirection: 'row',
