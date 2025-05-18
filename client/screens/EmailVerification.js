@@ -17,6 +17,7 @@ const EmailVerification = ({ navigation }) => {
 
   console.log("Current user:", user);
   console.log("sendEmailVerification:", typeof user.sendEmailVerification);
+  console.log(navigation.getState());
 
   useEffect(() => {
     if (user && !user.emailVerified) {
@@ -74,6 +75,18 @@ const EmailVerification = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={checkVerification} disabled={checking}>
         <Text style={styles.buttonText}>{checking ? 'Перевірка...' : 'Я підтвердив email'}</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={async () => {
+          await auth.signOut();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }],
+          });
+        }}
+      >
+        <Text style={styles.backButtonText}>Повернутись назад</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -116,6 +129,18 @@ const styles = StyleSheet.create({
   },
   buttonText: { 
     color: '#fff', 
+    fontSize: 16, 
+    fontFamily: 'e-Ukraine-M' 
+  },
+  backButton: { 
+    backgroundColor: Colors.background, 
+    borderRadius: 8, 
+    paddingVertical: 14, 
+    paddingHorizontal: 32, 
+    marginTop: 16 
+  },
+  backButtonText: { 
+    color: Colors.primary500, 
     fontSize: 16, 
     fontFamily: 'e-Ukraine-M' 
   },

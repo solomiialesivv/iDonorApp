@@ -46,7 +46,7 @@ const AuthenticatedScreen = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const [completedLiters, setCompletedLiters] = useState(0);
   const navigation = useNavigation();
-  const { setUser } = useUser();
+  const { user } = useUser();
 
   // Helper: Fetch medical center names in batch
   const fetchMedicalCenterNames = async (centerIds) => {
@@ -129,7 +129,6 @@ const AuthenticatedScreen = () => {
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
-      setUser(currentUser);
       fetchUserData(currentUser.uid);
     } else {
       setLoading(false);
